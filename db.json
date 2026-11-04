@@ -1,0 +1,13 @@
+{
+  "categorias": [
+    { "id": 1, "nome": "Secretaria e Matrícula", "icone": "📝" },
+    { "id": 2, "nome": "Financeiro e Boletos", "icone": "💰" },
+    { "id": 3, "nome": "Notas e Provas (AVA)", "icone": "🎓" }
+  ],
+  "perguntas": [
+    { "id": 1, "categoriaId": 1, "titulo": "Como faço a rematrícula?", "resposta": "A rematrícula é feita totalmente online na aba 'Secretaria' do seu portal AVA após o pagamento do boleto de renovação." },
+    { "id": 2, "categoriaId": 1, "titulo": "O que acontece se eu pegar DP?", "resposta": "Você cursará a matéria novamente no próximo semestre em regime de dependência, de forma 100% online." },
+    { "id": 3, "categoriaId": 2, "titulo": "Onde mudo a data de vencimento do boleto?", "resposta": "Acesse a aba 'Financeiro' no AVA e selecione 'Alterar Vencimento'." },
+    { "id": 4, "categoriaId": 3, "titulo": "Como funciona a Prova de Recuperação?", "resposta": "A PDR substitui a nota da prova oficial caso você tenha feito a primeira ou segunda chamada e não tenha atingido a nota mínima." }
+  ]
+}

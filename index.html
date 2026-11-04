@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centro de Ajuda & FAQ - MVP</title>
+    <style>
+        :root { --primary: #0056b3; --bg: #f4f6f9; --card: #ffffff; --text: #333; --border: #dee2e6; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: var(--bg); margin: 0; padding: 20px; color: var(--text); }
+        .container { max-width: 850px; margin: 0 auto; background: var(--card); padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
+        .header { border-bottom: 2px solid var(--primary); padding-bottom: 15px; margin-bottom: 25px; }
+        .header h1 { margin: 0; color: var(--primary); }
+        .search-box { margin-bottom: 25px; }
+        input, select { width: 100%; padding: 14px; border: 2px solid var(--border); border-radius: 6px; font-size: 16px; outline: none; box-sizing: border-box; }
+        input:focus { border-color: var(--primary); }
+        .categories { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 25px; }
+        .category-card { background: #e9ecef; padding: 10px 18px; border-radius: 20px; cursor: pointer; font-weight: 600; font-size: 14px; }
+        .category-card.active { background: var(--primary); color: white; }
+        .faq-item { background: var(--card); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 10px; overflow: hidden; }
+        .faq-header { padding: 18px; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; background: #fafafa; }
+        .faq-body { display: none; padding: 18px; border-top: 1px solid var(--border); line-height: 1.6; }
+        .faq-item.open .faq-body { display: block; }
+        .admin-panel { margin-top: 40px; padding: 20px; border: 1px solid #ffc107; background: #fff3cd; border-radius: 6px; }
+        .form-group { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+        .form-group input, .form-group select { flex: 1; min-width: 150px; padding: 10px; font-size: 14px; }
+        .btn-admin { background: #856404; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>PROJETO INTEGRADO II — FAQ Dinâmico</h1>
+        <p>Desenvolvedores: Alexandre da Silva Santos & Nicolas Maciel</p>
+    </div>
+
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Pesquisar por palavras-chave... (Ex: DP, boleto)">
+    </div>
+
+    <div class="categories" id="categoriesContainer"></div>
+    <div id="faqContainer"></div>
+
+    <div class="admin-panel">
+        <h3>Painel do Administrador (Persistência no Banco de Dados)</h3>
+        <div class="form-group">
+            <input type="text" id="newTitle" placeholder="Nova Pergunta">
+            <input type="text" id="newAnswer" placeholder="Resposta Completa">
+            <select id="newCategory">
+                <option value="1">Secretaria e Matrícula</option>
+                <option value="2">Financeiro e Boletos</option>
+                <option value="3">Notas e Provas (AVA)</option>
+            </select>
+            <button class="btn-admin" onclick="adicionarPergunta()">Inserir via POST</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let categoriaAtiva = null;
+
+    async function API(rota, params = {}, config = {}) {
+        let url = rota;
+        if(Object.keys(params).length) {
+            url += '?' + new URLSearchParams(params).toString();
+        }
+        const res = await fetch(url, config);
+        return res.json();
+    }
+
+    async function carregarCategorias() {
+        const categorias = await API('/api/categorias');
+        const container = document.getElementById('categoriesContainer');
+        container.innerHTML = `<div class="category-card active" id="cat-all" onclick="filtrarCategoria(null)">Ver Todas</div>`;
+        categorias.forEach(cat => {
+            container.innerHTML += `<div class="category-card" id="cat-${cat.id}" onclick="filtrarCategoria(${cat.id})">${cat.icone} ${cat.nome}</div>`;
+        });
+    }
+
+    async function carregarFaq() {
+        const busca = document.getElementById('searchInput').value;
+        const params = {};
+        if (busca) params.q = busca;
+        if (categoriaAtiva) params.categoriaId = categoriaAtiva;
+
+        const perguntas = await API('/api/perguntas', params);
+        const container = document.getElementById('faqContainer');
+        container.innerHTML = perguntas.length === 0 ? '<p>Nenhuma pergunta encontrada.</p>' : '';
+
+        perguntas.forEach(item => {
+            container.innerHTML += `
+                <div class="faq-item" id="faq-${item.id}">
+                    <div class="faq-header" onclick="document.getElementById('faq-${item.id}').classList.toggle('open')">
+                        <span>${item.titulo}</span> <span>▼</span>
+                    </div>
+                    <div class="faq-body"><p>${item.resposta}</p></div>
+                </div>`;
+        });
+    }
+
+    function filtrarCategoria(id) {
+        categoriaAtiva = id;
+        document.querySelectorAll('.category-card').forEach(el => el.classList.remove('active'));
+        document.getElementById(id ? `cat-${id}` : 'cat-all').classList.add('active');
+        carregarFaq();
+    }
+
+    async function adicionarPergunta() {
+        const titulo = document.getElementById('newTitle').value;
+        const resposta = document.getElementById('newAnswer').value;
+        const categoriaId = document.getElementById('newCategory').value;
+
+        if(!titulo || !resposta) return alert('Preencha os campos!');
+
+        await API('/api/admin/perguntas', {}, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ titulo, resposta, categoriaId })
+        });
+
+        document.getElementById('newTitle').value = '';
+        document.getElementById('newAnswer').value = '';
+        carregarFaq();
+    }
+
+    document.getElementById('searchInput').addEventListener('input', carregarFaq);
+    carregarCategorias();
+    carregarFaq();
+</script>
+</body>
+</html>
